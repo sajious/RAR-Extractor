@@ -6,20 +6,34 @@ def extract_rar_links(url):
     try:
         response = requests.get(url)
         response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')        
-        links = soup.find_all('a', href=True)        
-        rar_links = [link['href'] for link in links if link['href'].lower().endswith('.rar')]        
-        rar_links = [requests.compat.urljoin(url, link) for link in rar_links]        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        links = soup.find_all('a', href=True)
+        
+        rar_links = [link['href'] for link in links if link['href'].lower().endswith('.rar')]
+        
+        rar_links = [requests.compat.urljoin(url, link) for link in rar_links]
+        
         return rar_links
     except requests.RequestException as e:
         print(f"Error fetching {url}: {e}")
         return []
+
 def main():
     input_file = 'websites.txt'
     output_file = 'rar_download_links.txt'
-   
-    with open(input_file, 'r') as f:
-        websites = [line.strip() for line in f if line.strip()]
+    
+    try:
+        with open(input_file, 'r', encoding='utf-8') as f:
+            websites = [line.strip() for line in f if line.strip()]
+    except UnicodeDecodeError:
+        print("Error: Unable to read the input file with UTF-8 encoding. Trying with 'utf-8-sig' encoding...")
+        try:
+            with open(input_file, 'r', encoding='utf-8-sig') as f:
+                websites = [line.strip() for line in f if line.strip()]
+        except UnicodeDecodeError:
+            print("Error: Unable to read the input file. Please ensure it's saved in UTF-8 encoding.")
+            return
     
     all_rar_links = []
     
@@ -30,7 +44,7 @@ def main():
     
     unique_rar_links = list(dict.fromkeys(all_rar_links))
     
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w', encoding='utf-8') as f:
         for link in unique_rar_links:
             f.write(f"{link}\n")
     
